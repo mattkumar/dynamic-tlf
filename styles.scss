@@ -1,0 +1,67 @@
+/*-- scss:rules --*/
+
+/* Adding a header */
+#title-block-header, h1 {
+  color: #FFFFFF;
+  background-color: #000000;
+  height: 70px;
+  line-height: 70px;
+  margin-block-end: 0rem;
+  text-indent: 10px;
+}
+
+/* Formatting for nav tabs */
+.nav-tabs .nav-item .nav-link.active {
+  color: #E10033 !important;
+  border-top: 2px solid #E10033 !important;
+  border-radius: 0px !important;
+}
+
+.tabcontent {
+  color: white;
+  display: none;
+  padding: 100px 20px;
+  height: 100%;
+}
+/* Formatting for the reactable table cells */
+.rt-td-inner:active, .rt-td-inner:hover {
+    background-color: #E10033 !important; 
+}
+
+/* Custom Colors for different components */
+body {
+  background-color: #f7f7f7;
+}
+
+html {
+  height: 100vh !important;
+}
+
+/* Shadow around tabs */
+.tab-content {
+  background-color: #ffffff;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, 
+              rgba(0, 0, 0, 0.12) 0px -12px 30px, 
+              rgba(0, 0, 0, 0.12) 0px 4px 6px, 
+              rgba(0, 0, 0, 0.17) 0px 12px 13px, 
+              rgba(0, 0, 0, 0.09) 0px -3px 5px;
+}
+
+/* Add to existing sidebar class */
+.mysidebar { 
+  @extend .sidebar;
+  background-color: #e1e1e1 !important;
+  border-right: 1px solid #000000 !important; 
+  height: 100vh !important;
+} 
+
+
+/* remove hyperlink underlines */
+a:link {
+  text-decoration: none;
+}
+
+.selectize-control .selectize-dropdown {
+  position: static !important;
+}
+ 

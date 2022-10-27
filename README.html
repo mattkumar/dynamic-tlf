@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.1.189">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>readme</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="README_files/libs/clipboard/clipboard.min.js"></script>
+<script src="README_files/libs/quarto-html/quarto.js"></script>
+<script src="README_files/libs/quarto-html/popper.min.js"></script>
+<script src="README_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="README_files/libs/quarto-html/anchor.min.js"></script>
+<link href="README_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="README_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="README_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="README_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="README_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+<section id="dynamic-tlfs-contest" class="level1">
+<h1>Dynamic-TLFS-contest</h1>
+<p>R Studio Table Contest 2022 Entry</p>
+<section id="about" class="level2">
+<h2 class="anchored" data-anchor-id="about">About</h2>
+<p>This is my entry into the R Studio 2022 Table Contest. It uses Tplyr, reactable, shiny and Quarto to present an insights dashboard for clinical trial data. <br> <br> You may view it <a href="https://matt-portfolio.shinyapps.io/quarto-dashboard/">here.</a></p>
+</section>
+<section id="preview" class="level2">
+<h2 class="anchored" data-anchor-id="preview">Preview</h2>
+<p>This is a video preview of the dashboard that showcases the features described below.<br><br> <iframe width="800" height="450" src="https://www.youtube.com/embed/Ax1md38X-tI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></p>
+</section>
+<section id="aims" class="level2">
+<h2 class="anchored" data-anchor-id="aims">Aims</h2>
+<p>My aims for this project were two-fold:</p>
+<ol type="1">
+<li><p>Investigate whether we can dynamically create tables which can be used to guide an exploratory analysis. <br><br>The analysis starts with an <strong>anchor table</strong>, where individual cells can be clicked to retrieve the study participants ID’s who comprise it. These are subsequently fed into additional tables, listings and figures through reactives. <br><br> In previous work, I’ve hard coded the anchor table by pre-specifying the variables to be displayed. With this work, you can now <strong>dynamically</strong> specify the anchor table to include any variables you like, which in turn can be used explore subgroups <i>on-the-fly</i>.<br><br> This work is largely enabled by utilizing the metadata building features of the <a href="https://github.com/atorus-research/Tplyr">Tplyr</a> package.</p></li>
+<li><p>Currently, no dashboard extension or package exists for Quarto. I used this opportunity to also see if I could (roughly) mimic what <code>flexdashboard</code> offers by using Quarto and custom css. My inspiration was the bootswatch <code>lux</code> theme.</p></li>
+</ol>
+</section>
+<section id="linked-tlfs" class="level2">
+<h2 class="anchored" data-anchor-id="linked-tlfs">Linked TLFs</h2>
+<p>The linked TLFs are also interactive and share the spirit of “drilling down” and exploration</p>
+<section id="adverse-events-table" class="level3">
+<h3 class="anchored" data-anchor-id="adverse-events-table">Adverse Events Table</h3>
+<ul>
+<li>Uses <code>reactable</code>’s groupBy to succinctly present a large table</li>
+<li>Cells (in the second column) are <strong>hyper-linked</strong> to open a <a href="https://http://medlineplus.gov/">MedlinePlus</a> search of that term. I found this resource was helpful in learning about medical conditions when analyzing clinical trials data.</li>
+</ul>
+</section>
+<section id="patient-listing-1" class="level3">
+<h3 class="anchored" data-anchor-id="patient-listing-1">Patient Listing 1</h3>
+<ul>
+<li>Uses <code>reactable</code>’s filter + search to navigate a potentially exhaustive table</li>
+<li>Leverages <code>reactable</code>’s columnGroups + formatting to organize the data layout</li>
+<li>Capable of exporting a list subject identifiers as a CSV file to enable further analyses of interesting subgroups</li>
+</ul>
+</section>
+<section id="patient-listing-2" class="level3">
+<h3 class="anchored" data-anchor-id="patient-listing-2">Patient Listing 2</h3>
+<ul>
+<li>Uses <code>reactablefmtr</code>’s inline visual to show vital signs measured at three times relative to baseline (i.e.&nbsp;percent change)</li>
+<li>Leverages <code>reactable</code>’s columnGroups + formatting to organize the data layout</li>
+<li>Paired with shiny inputs to enable switching of Blood Pressure Parameters and Visits</li>
+</ul>
+</section>
+<section id="adverse-event-figure" class="level3">
+<h3 class="anchored" data-anchor-id="adverse-event-figure">Adverse Event Figure</h3>
+<ul>
+<li>The <code>highcharter</code> column chart is a <strong>drill down plot</strong>. The first layer displays the top 4 System Organ Classes for a given subset</li>
+<li>Clicking each of bars lets you drill down into a stacked column chart for the Preferred Terms x Severity.</li>
+<li>Customized tool tips to display information more clearly (i.e.&nbsp;severity of adverse event)</li>
+<li>It’s a visual representation of the adverse event linked table, but could be extended to show other data views too.</li>
+</ul>
+</section>
+</section>
+<section id="code-organization" class="level2">
+<h2 class="anchored" data-anchor-id="code-organization">Code Organization</h2>
+<p>For this project, I’ve used <code>renv</code> so that you may recreate this in an offline setting with ease.</p>
+<p>While there are many ways to structure this dashboard, I chose not to experiment with modules and and keep things simple until a proper dashboard extension or framework for Quarto is released. I’ve instead isolated key parts of the code into their own server <code>chunks</code> with comments for ease of review.</p>
+</section>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
+<p>The data for this example comes from the <a href="https://github.com/phuse-org/TestDataFactory">TestDataFactory</a> repository operated by <a href="https://phuse.global/">phuse</a>. This data is not stored in the app deployment or my code repository - it is accessed directly from the source repository.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

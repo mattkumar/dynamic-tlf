@@ -1,0 +1,15 @@
+name: dynamic-tlf
+title: dynamic-tlf
+username:
+account: matt-portfolio
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7444125
+bundleId: 6448983
+url: https://matt-portfolio.shinyapps.io/dynamic-tlf/
+when: 1666914878.5331
+lastSyncTime: 1666914878.53311
+quarto_version: 1.1.189
+quarto_engines: knitr
+asMultiple: FALSE
+asStatic: FALSE

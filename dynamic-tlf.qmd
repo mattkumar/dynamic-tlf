@@ -1,0 +1,547 @@
+---
+title: "Dynamic, Interactive Tables, Listings and Figures"
+format: 
+  html:
+    page-layout: custom
+theme: [lux, styles.scss]
+server: shiny
+---
+
+```{r}
+#| context: setup
+#| include: false
+
+# libs
+library(tidyverse)
+library(haven)
+library(reactable)
+library(reactablefmtr)
+library(highcharter)
+library(Tplyr)
+
+# data
+adsl <- read_xpt(url("https://github.com/phuse-org/TestDataFactory/raw/main/Updated/TDF_ADaM/adsl.xpt"))
+adae <- read_xpt(url("https://github.com/phuse-org/TestDataFactory/raw/main/Updated/TDF_ADaM/adae.xpt"))
+advs <- read_xpt(url("https://github.com/phuse-org/TestDataFactory/raw/main/Updated/TDF_ADaM/advs.xpt"))
+```
+
+::: {.grid}
+::: {.g-col-2 .w-100 .p-2 .mysidebar}
+```{r}
+column(12,
+  align = "center",
+  p("Choose variables for the anchor table then click Make Table"),
+  hr(),
+  uiOutput("treat_vars_ui"),
+  br(),
+  uiOutput("count_vars_ui"),
+  br(),
+  uiOutput("numeric_vars_ui"),
+  br(),
+  actionButton("go", "Make Table", style = "border-color: #E10033"),
+  hr(),
+  p("Next, click any", span(style = "color:#E10033", "result cell"), "of the anchor table to view associated tables, listings and figures for that subset associated on the right.")
+)
+```
+:::
+
+::: {.g-col-5 .w-100 .p-2}
+::: {.panel-tabset}
+## Anchor Table
+```{r}
+reactableOutput("anchor_table")
+```
+:::
+:::
+
+::: {.g-col-5 .w-100 .p-2}
+::: {.panel-tabset}
+## Table
+```{r}
+reactableOutput("ae")
+```
+
+## Figure
+```{r}
+highchartOutput("figure", height = "500px")
+```
+
+## Listing 1
+```{r}
+uiOutput("listing1_ctrl")
+reactableOutput("listing")
+```
+
+## Listing 2
+```{r}
+uiOutput("listing2_ctrl")
+reactableOutput("listing2")
+```
+:::
+:::
+:::
+
+```{r}
+#| context: server
+
+# This part of the server renders selectors for grouping, frequency and numeric variables. 
+# It's done this way so in the future we can upload custom data - for now it's fixed using the adsl data set
+
+output$treat_vars_ui <- renderUI({
+  selectInput("treat_vars",
+    "Group Variable",
+    multiple = FALSE,
+    selected = "TRT01A",
+    choices = names(Filter(is.character, adsl))
+  )
+})
+
+output$count_vars_ui <- renderUI({
+  selectInput("count_vars",
+    "Frequency Variables",
+    multiple = TRUE,
+    selected = c("SEX", "AGEGR1", "ETHNIC"),
+    choices = names(Filter(is.character, adsl))
+  )
+})
+
+output$numeric_vars_ui <- renderUI({
+  selectInput("numeric_vars",
+    "Numeric Variables",
+    multiple = TRUE,
+    selected = "BMIBL",
+    choices = names(Filter(is.numeric, adsl))
+  )
+})
+```
+
+```{r}
+#| context: server
+
+# This part of the server captures choices for each of the variables into separate reactives
+# These reactives are then used constructing the anchor table
+
+treat_vars <- reactive({
+  input$treat_vars
+})
+
+count_vars <- reactive({
+  data.frame(vars = input$count_vars)
+})
+
+numeric_vars <- reactive({
+  data.frame(vars = input$numeric_vars)
+})
+```
+
+```{r}
+#| context: server
+
+# This part of the server creates the anchor table using Tplyr
+# We currently need at least one count and at least one numeric variable
+
+# Specify anchor table
+base_table <- reactive({
+  tplyr_table(adsl, !!sym(treat_vars())) %>%
+    # loop through count variables
+    (function(x) {
+      for (i in 1:nrow(count_vars())) {
+        x <- add_layer(
+          x,
+          group_count(!!sym(count_vars()$vars[[i]]),
+            b = !!count_vars()$vars[[i]]
+          ) %>%
+            add_total_row(f_str("xxxx", n))
+        )
+      }
+      x
+    })() %>%
+    # loop through numeric variables
+    (function(x) {
+      for (i in 1:nrow(numeric_vars())) {
+        x <- add_layer(
+          x,
+          group_desc(!!sym(numeric_vars()$var[[i]]),
+            b = !!numeric_vars()$var[[i]]
+          )
+        )
+      }
+      x
+    })() %>%
+    # add the total arm
+    add_total_group()
+}) %>%
+  bindEvent(input$go)
+
+# Build anchor table, with Tplyr metadata
+meta <- reactive({
+  req(base_table())
+  build(base_table(), metadata = TRUE) %>%
+    apply_row_masks(row_breaks = TRUE)
+})
+
+# Setup trackers for what cell users click (row + col =  cell)
+row <- reactive(meta()[input$row$index, 1]$row_id)
+col <- reactive(input$col$column)
+
+# Display anchor table using reactable
+output$anchor_table <- renderReactable({
+  reactable(
+    meta() %>%
+      select(-starts_with("ord"), -row_id) %>%
+      relocate("var1_Total", .after = last_col()),
+    # this JS captures the cell coordinate into input$row, and input$col (row + col = cell)
+    onClick = JS("function(rowInfo, colInfo) {
+                    if (window.Shiny) {
+                      Shiny.setInputValue('row', { index: rowInfo.index + 1 })
+                      Shiny.setInputValue('col', { column: colInfo.id })
+                      }}"),
+    pagination = FALSE,
+    highlight = TRUE,
+    sortable = FALSE,
+    defaultColDef = colDef(
+      align = "center",
+      html = TRUE
+    ),
+    style = list(fontSize = "0.5rem"),
+    columns = list(
+      row_label1 = colDef(
+        name = "",
+        align = "center"
+      ),
+      row_label2 = colDef(
+        name = "",
+        align = "left"
+      )
+    )
+  )
+})
+```
+
+```{r}
+#| context: server
+
+# Use row + col to retrieve the study participants who make up the clicked cell
+# This is done by looking at the anchor table (base_table()) and using Tplyr::get_meta_subset()
+# The result is a reactive data frame of participant ID's I can merge into various data sets to construct additional tables, listings and figures (see line 246-248 for an example)
+
+sub_data <- reactive({
+  # control
+  req(base_table(), row(), col())
+  tmp <- get_meta_subset(base_table(), row(), col())
+  tmp
+})
+```
+
+```{r}
+#| context: server
+
+# Create adverse events (ae) table
+
+output$ae <- renderReactable({
+  # control
+  validate(need(nrow(sub_data()) > 0, "No data to display"))
+
+  # subset clicked data from adae
+  inp <- adae %>%
+    inner_join(sub_data(), by = c("USUBJID" = "USUBJID")) %>%
+    inner_join(adsl, by = c("USUBJID" = "USUBJID"))
+
+  # build ae table
+  t2 <- tplyr_table(inp, TRT01P) %>%
+    add_layer(
+      group_count(vars(AEBODSYS, AEDECOD))
+    ) %>%
+    build()
+
+  # light post processing on content
+  t2 <- t2 %>%
+    mutate(
+      row_label2 = stringr::str_to_title(row_label2),
+      row_label1 = stringr::str_to_title(row_label1)
+    ) %>%
+    # make cells hyperlinkable to Medline
+    mutate(test2 = stringr::str_replace_all(row_label2, " ", "&nbsp;")) %>%
+    mutate(test2 = glue::glue('<a href="https://vsearch.nlm.nih.gov/vivisimo/cgi-bin/query-meta?v%3Aproject=medlineplus&v%3Asources=medlineplus-bundle&query={test2}" target="_blank">{test2}</a>')) %>%
+    select(row_label1, test2, starts_with("var"))
+
+  # display ae table
+  t2 %>%
+    reactable(.,
+      width = "auto",
+      groupBy = c("row_label1"),
+      pagination = FALSE,
+      highlight = TRUE,
+      sortable = FALSE,
+      compact = TRUE,
+      defaultColDef = colDef(
+        align = "left",
+        html = TRUE
+      ),
+      style = list(fontSize = "0.5rem"),
+      columns = list(
+        row_label1 = colDef(
+          name = "System Organ Class"
+        ),
+        test2 = colDef(
+          name = "System Organ Class<br>&nbsp;Preferred Term"
+        )
+      )
+    )
+})
+```
+
+
+```{r}
+#| context: server
+
+# Create figure
+
+output$figure <- renderHighchart({
+  # control
+  validate(need(nrow(sub_data()) > 0, "No data to display"))
+
+  # modify existing theme - this is fairly close to lux :D
+  my_theme <- hc_theme_bloom()
+  my_theme$drilldown$activeAxisLabelStyle$color <- "00FF00"
+
+  # start computations (AEBODSYS is SOC)
+  top_socs <- adae %>%
+    inner_join(sub_data(), by = c("USUBJID" = "USUBJID")) %>%
+    count(AEBODSYS, sort = TRUE) %>%
+    slice(1:4)
+
+  # get PT data (AEDECOD is PT)
+  pt_data <- adae %>%
+    inner_join(top_socs) %>%
+    select(AEBODSYS, AEDECOD, AESEV)
+
+  # calc PTs per SOC
+  pt_calc <- pt_data %>%
+    group_by(AEBODSYS) %>%
+    count(AEDECOD, sort = TRUE) %>%
+    ungroup()
+
+  # keep only top 10 PTs
+  pt_calc <- pt_calc %>%
+    arrange(AEBODSYS, desc(n)) %>%
+    group_by(AEBODSYS) %>%
+    slice(1:10)
+
+  # order the data for the sub-graph
+  # we want the PTs with the highest overall count (i.e. across severity) to show in descending order
+  sev_calc <- pt_calc %>%
+    inner_join(pt_data %>%
+      select(AEBODSYS, AEDECOD, AESEV)) %>%
+    count(AEBODSYS, AEDECOD, AESEV) %>%
+    group_by(AEDECOD) %>%
+    mutate(order = sum(n)) %>%
+    ungroup() %>%
+    arrange(desc(order)) %>%
+    select(-order)
+
+  # sub graph (2nd level)
+  pt_graph <- sev_calc %>%
+    group_nest(AEBODSYS) %>%
+    mutate(
+      id = AEBODSYS,
+      type = "column",
+      data = map(data,
+        mutate,
+        name = AEDECOD, y = n,
+        color = colorize(AESEV, colors = c("#000000", "#767676", "#E4E4E4"))
+      ),
+      data = map(data, list_parse)
+    )
+
+
+  # main graph (1st level)
+  hchart(top_socs,
+    "column",
+    colorByPoint = TRUE,
+    hcaes(x = AEBODSYS, y = n, drilldown = AEBODSYS)
+  ) %>%
+    hc_drilldown(
+      allowPointsDrillDown = F,
+      series = c(list_parse(pt_graph))
+    ) %>%
+    hc_add_theme(my_theme) %>%
+    hc_xAxis(title = list(text = "System Organ Class → Preferred Term")) %>%
+    # custom JS for the hovering on the drill down bar chart!
+    # this essentially acts as a legend :)
+    hc_tooltip(formatter = JS("function(){
+                              if(this.point.AEDECOD === undefined) {
+                                return ('<b>Term:</b> ' +
+                                        this.point.AEBODSYS  +
+                                        '<br> <b>Severity:</b> ' +
+                                        'All Severity' +
+                                        '<br> <b>Count:</b> ' +
+                                        this.point.n)
+                              } else {
+                                return ('<b>Term:</b> ' +
+                                        this.point.AEDECOD  +
+                                        '<br> <b>Severity:</b> ' +
+                                        this.point.AESEV +
+                                        '<br> <b>Count:</b> ' +
+                                        this.point.n)
+                              }}"))
+})
+```
+
+```{r}
+#| context: server
+
+# Create patient listing 1
+
+output$listing <- renderReactable({
+  # control
+  validate(need(nrow(sub_data()) > 0, "No data to display"))
+
+  # subset clicked data from adsl (completer flags)
+  # perform some recoding of completer flag variables
+  listing_data <- sub_data() %>%
+    left_join(adsl) %>%
+    select(USUBJID, ARM, COMP8FL, COMP16FL, COMP24FL) %>%
+    # isn't it awesome we can do things like this in R?!
+    mutate(across(ends_with("FL"),
+      .fns = ~ case_when(
+        . == "N" ~ "❌ No",
+        . == "Y" ~ "✅ Yes",
+        TRUE ~ "⚠️ Unknown"
+      )
+    ))
+  
+  # display patient listing 1
+  listing_data %>%
+    reactable(.,
+      width = "auto",
+      highlight = TRUE,
+      filterable = TRUE,
+      defaultPageSize = 10,
+      sortable = FALSE,
+      searchable = TRUE,
+      compact = TRUE,
+      defaultColDef = colDef(
+        align = "center",
+        html = TRUE
+      ),
+      columns = list(
+        COMP8FL = colDef(name = "8 Weeks"),
+        COMP16FL = colDef(name = "16 Weeks"),
+        COMP24FL = colDef(name = "24 Weeks")
+      ),
+      columnGroups = list(
+        colGroup("Study Completion Milestone",
+          columns = c("COMP8FL", "COMP16FL", "COMP24FL")
+        )
+      ),
+      style = list(fontSize = "0.5rem")
+    )
+})
+
+# Create download button control
+
+output$listing1_ctrl <- renderUI({
+   # control
+  validate(need(nrow(sub_data()) > 0, "No data to display"))
+  
+  # create action button for downloading
+  actionButton("dl", "Export CSV",
+    style = "border-color: #E10033",
+    class = "btn btn-secondary btn-sm",
+    onclick = "Reactable.downloadDataCSV('listing', 'listing.csv')"
+  )
+})
+```
+
+```{r}
+#| context: server
+
+# Create patient listing 2
+
+output$listing2 <- renderReactable({
+  # control
+  validate(
+    need(nrow(sub_data()) > 0, "No data to display"),
+    need(input$time, "Select an analysis time point"),
+    need(input$param, "Select a vital signs parameter")
+  )
+
+  # subset clicked data from advs (vital signs)
+  # dependent on shiny inputs (input$time, input$param), which are defined below
+  # note: not all participants in an anchor table necessarily have to have vital sign data!
+  listing_data2 <- sub_data() %>%
+    select(USUBJID) %>%
+    left_join(advs) %>%
+    select(USUBJID, AVISIT, PCHG, PARAM, ATPT) %>%
+    filter(
+      AVISIT == input$time,
+      PARAM == input$param
+    ) %>%
+    pivot_wider(values_from = PCHG, names_from = ATPT, id_cols = USUBJID) %>%
+    select(USUBJID,
+      t1 = 3,
+      t3 = 4,
+      t5 = 2
+    ) %>%
+    arrange(t1, t3, t5)
+
+  # display patient listing 2
+  # this part uses reactablefmtr!
+  listing_data2 %>%
+    reactable(.,
+      width = "auto",
+      pagination = TRUE,
+      defaultPageSize = 10,
+      highlight = TRUE,
+      style = list(fontSize = "0.5rem"),
+      defaultColDef = colDef(
+        align = "center",
+        cell = data_bars(listing_data2,
+          text_position = "above",
+          animation = "width 3s ease-out",
+          box_shadow = TRUE,
+          number_fmt = scales::label_percent(scale = 1),
+          fill_color = c("#E10033", "#767676")
+        )
+      ),
+      columns = list(
+        t1 = colDef(name = "1 Minute"),
+        t3 = colDef(name = "3 Minute"),
+        t5 = colDef(name = "5 Minute")
+      ),
+      columnGroups = list(
+        colGroup("% Change from Baseline by Measurement Time",
+          columns = c("t1", "t3", "t5")
+        )
+      )
+    )
+})
+
+# Create shiny inputs that control Vital Signs parameter and Visit
+
+output$listing2_ctrl <- renderUI({
+  validate(need(nrow(sub_data()) > 0, "No data to display"))
+
+  # create two select inputs; one for blood pressure parameters, one for visit
+  tagList(
+    div(
+      style = "display: inline-block;vertical-align:top;",
+      selectInput("param",
+        "Vital Sign",
+        choices = c(
+          "DBP (mmHg)" = "Diastolic Blood Pressure (mmHg)",
+          "SBP (mmHg)" = "Systolic Blood Pressure (mmHg)"
+        )
+      )
+    ),
+    div(
+      style = "display: inline-block;vertical-align:top;",
+      selectInput("time",
+        "Visit",
+        choices = unique(advs$AVISIT)[-1:-2]
+      )
+    )
+  )
+})
+```
