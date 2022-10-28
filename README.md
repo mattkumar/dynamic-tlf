@@ -8,8 +8,9 @@ This is my entry into the R Studio 2022 Table Contest. It uses Tplyr, reactable,
 
 ## Preview
 
-This is a video preview of the dashboard that showcases the features described below.</br></br>
-<iframe width="800" height="450" src="https://www.youtube.com/embed/Ax1md38X-tI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+Here is a preview of the dashboard. <strong>Clicking the preview image will take you to a higher resolution video version.</strong>
+
+[![](demo.gif)](https://www.youtube.com/watch?v=Ax1md38X-tI)
 
 ## Aims
 
