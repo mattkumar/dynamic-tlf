@@ -137,7 +137,7 @@ numeric_vars <- reactive({
 ```{r}
 #| context: server
 
-# This part of the server creates the anchor table using Tplyr
+# This part of the server creates the input to the anchor table using Tplyr
 # We currently need at least one count and at least one numeric variable
 
 # Specify anchor table
@@ -221,9 +221,9 @@ output$anchor_table <- renderReactable({
 ```{r}
 #| context: server
 
-# Use row + col to retrieve the study participants who make up the clicked cell
-# This is done by looking at the anchor table (base_table()) and using Tplyr::get_meta_subset()
-# The result is a reactive data frame of participant ID's I can merge into various data sets to construct additional tables, listings and figures (see line 246-248 for an example)
+# This part of the server tracks the cells that are clicked on the anchor table
+# We use row + col coordinates of the clicked cell and funnel this to Tplyr::get_meta_subset()
+# The result is a intermediary (reactive) data frame of participant ID's I use to construct additional tables, listings and figures (see line 246-248 for an example)
 
 sub_data <- reactive({
   # control
@@ -236,7 +236,7 @@ sub_data <- reactive({
 ```{r}
 #| context: server
 
-# Create adverse events (ae) table
+# This part of the server creates the adverse events (ae) table
 
 output$ae <- renderReactable({
   # control
@@ -261,9 +261,9 @@ output$ae <- renderReactable({
       row_label1 = stringr::str_to_title(row_label1)
     ) %>%
     # make cells hyperlinkable to Medline
-    mutate(test2 = stringr::str_replace_all(row_label2, " ", "&nbsp;")) %>%
-    mutate(test2 = glue::glue('<a href="https://vsearch.nlm.nih.gov/vivisimo/cgi-bin/query-meta?v%3Aproject=medlineplus&v%3Asources=medlineplus-bundle&query={test2}" target="_blank">{test2}</a>')) %>%
-    select(row_label1, test2, starts_with("var"))
+    mutate(prep = stringr::str_replace_all(row_label2, " ", "&nbsp;")) %>%
+    mutate(prep = glue::glue('<a href="https://vsearch.nlm.nih.gov/vivisimo/cgi-bin/query-meta?v%3Aproject=medlineplus&v%3Asources=medlineplus-bundle&query={prep}" target="_blank">{prep}</a>')) %>%
+    select(row_label1, prep, starts_with("var"))
 
   # display ae table
   t2 %>%
@@ -283,7 +283,7 @@ output$ae <- renderReactable({
         row_label1 = colDef(
           name = "System Organ Class"
         ),
-        test2 = colDef(
+        prep = colDef(
           name = "System Organ Class<br>&nbsp;Preferred Term"
         )
       )
@@ -295,7 +295,7 @@ output$ae <- renderReactable({
 ```{r}
 #| context: server
 
-# Create figure
+# This part of the server creates the adverse events (ae) drill down figure
 
 output$figure <- renderHighchart({
   # control
@@ -391,7 +391,7 @@ output$figure <- renderHighchart({
 ```{r}
 #| context: server
 
-# Create patient listing 1
+# This part of the server creates patient listing 1
 
 output$listing <- renderReactable({
   # control
@@ -457,7 +457,7 @@ output$listing1_ctrl <- renderUI({
 ```{r}
 #| context: server
 
-# Create patient listing 2
+# This part of the server creates patient listing 2
 
 output$listing2 <- renderReactable({
   # control
@@ -487,7 +487,7 @@ output$listing2 <- renderReactable({
     arrange(t1, t3, t5)
 
   # display patient listing 2
-  # this part uses reactablefmtr!
+  # this part uses reactablefmtr to help draw data bars inside the reactable
   listing_data2 %>%
     reactable(.,
       width = "auto",

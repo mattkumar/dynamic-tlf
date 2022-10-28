@@ -58,3 +58,11 @@ While there are many ways to structure this dashboard, I chose not to experiment
 ## Data
 
 The data for this example comes from the [TestDataFactory](https://github.com/phuse-org/TestDataFactory) repository operated by [phuse](https://phuse.global/). This data is not stored in the app deployment or my code repository - it is accessed directly from the source repository.
+
+## Future
+
+This app can be extended in a number of different ways:
+
+- Including additional, linked TLFs; the sky's the limit! Modules?
+- Uploading data functionality - the way I've began to structure the server will enable this in the future (i.e. using renderUI)
+- More robust control and validation for when the anchor table is updated
