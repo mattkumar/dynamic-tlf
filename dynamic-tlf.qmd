@@ -300,7 +300,7 @@ output$ae_ctrl <- renderUI({
   validate(need(nrow(sub_data()) > 0, "No data to display"))
   
   # create action button for expand/collapse SOCs -> PTs
-  actionButton("expand", "Expand SOCs",
+  actionButton("expand", "Expand Terms",
     style = "border-color: #E10033",
     class = "btn btn-secondary btn-sm",
     onclick = "Reactable.toggleAllRowsExpanded('ae')"

@@ -10,7 +10,7 @@ This is my entry into the R Studio 2022 Table Contest. It uses Tplyr, reactable,
 
 Here is a preview of the dashboard. <strong>Click to view to a higher resolution video version.</strong>
 
-[![](demo.gif)](https://www.youtube.com/watch?v=Ax1md38X-tI)
+[![](demo.gif)](https://www.youtube.com/watch?v=kt_5AB3OmJw)
 
 ## Aims
 
@@ -28,8 +28,8 @@ The linked TLFs are also interactive and share the spirit of "drilling down" and
 
 -   Uses `reactable`'s groupBy to succinctly present a large table
 -   Cells (in the second column) are <strong>hyper-linked</strong> to open a [MedlinePlus](https://http://medlineplus.gov/) search of that term. I found this resource was helpful in learning about medical conditions when analyzing clinical trials data.
--   Provides a table-wide search functionality to pin-point certain SOCs/PTs of interest
--   A button to expand all SOCs to show the nested PTs
+-   A table-wide search functionality to pin-point certain SOCs/PTs of interest
+-   A button to expand all SOCs at once to show the nested PTs
 
 ### Adverse Event Figure
 
@@ -54,7 +54,7 @@ The linked TLFs are also interactive and share the spirit of "drilling down" and
 
 ## Code Organization
 
-For this project, I've used `renv` so that you may recreate this in an offline setting with ease.
+For this project, I've used `renv` so that you may recreate this in an offline setting.
 
 While there are many ways to structure this dashboard, I chose not to experiment with modules and and keep things simple until a proper dashboard extension or framework for Quarto is released. I've instead isolated key parts of the code into their own server `chunks` with comments for ease of review.
 
