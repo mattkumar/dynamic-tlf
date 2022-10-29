@@ -8,7 +8,7 @@ This is my entry into the R Studio 2022 Table Contest. It uses Tplyr, reactable,
 
 ## Preview
 
-Here is a preview of the dashboard. <strong>Clicking the preview image will take you to a higher resolution video version.</strong>
+Here is a preview of the dashboard. <strong>Click to view to a higher resolution video version.</strong>
 
 [![](demo.gif)](https://www.youtube.com/watch?v=Ax1md38X-tI)
 
@@ -28,6 +28,16 @@ The linked TLFs are also interactive and share the spirit of "drilling down" and
 
 -   Uses `reactable`'s groupBy to succinctly present a large table
 -   Cells (in the second column) are <strong>hyper-linked</strong> to open a [MedlinePlus](https://http://medlineplus.gov/) search of that term. I found this resource was helpful in learning about medical conditions when analyzing clinical trials data.
+-   Provides a table-wide search functionality to pin-point certain SOCs/PTs of interest
+-   A button to expand all SOCs to show the nested PTs
+
+### Adverse Event Figure
+
+-   The `highcharter` column chart is a <strong>drill down plot</strong>. The first layer displays the top 4 System Organ Classes for a given subset
+-   Clicking each of bars lets you drill down into a stacked column chart for the Preferred Terms x Severity
+-   Customized tool tips to display information more clearly (i.e. severity of adverse event)
+-   It's a visual representation of the adverse event linked table, but could be extended to show other data views too
+
 
 ### Patient Listing 1
 
@@ -40,13 +50,6 @@ The linked TLFs are also interactive and share the spirit of "drilling down" and
 -   Uses `reactablefmtr`'s inline visual to show vital signs measured at three times relative to baseline (i.e. percent change)
 -   Leverages `reactable`'s columnGroups + formatting to organize the data layout
 -   Paired with shiny inputs to enable switching of Blood Pressure Parameters and Visits
-
-### Adverse Event Figure
-
--   The `highcharter` column chart is a <strong>drill down plot</strong>. The first layer displays the top 4 System Organ Classes for a given subset
--   Clicking each of bars lets you drill down into a stacked column chart for the Preferred Terms x Severity.
--   Customized tool tips to display information more clearly (i.e. severity of adverse event)
--   It's a visual representation of the adverse event linked table, but could be extended to show other data views too.
 
 
 ## Code Organization
@@ -63,6 +66,6 @@ The data for this example comes from the [TestDataFactory](https://github.com/ph
 
 This app can be extended in a number of different ways:
 
-- Including additional, linked TLFs; the sky's the limit! Modules?
+- Including additional, linked TLFs; the sky's the limit!
 - Uploading data functionality - the way I've began to structure the server will enable this in the future (i.e. using renderUI)
-- More robust control and validation for when the anchor table is updated
+- More robust organization, control and validation for when the anchor table is updated

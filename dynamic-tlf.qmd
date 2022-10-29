@@ -58,6 +58,7 @@ reactableOutput("anchor_table")
 ::: {.panel-tabset}
 ## Table
 ```{r}
+uiOutput("ae_ctrl")   
 reactableOutput("ae")
 ```
 
@@ -84,7 +85,7 @@ reactableOutput("listing2")
 ```{r}
 #| context: server
 
-# This part of the server renders selectors for grouping, frequency and numeric variables. 
+# This part of the server renders ui selectors for the grouping, frequency and numeric variables. 
 # It's done this way so in the future we can upload custom data - for now it's fixed using the adsl data set
 
 output$treat_vars_ui <- renderUI({
@@ -119,7 +120,7 @@ output$numeric_vars_ui <- renderUI({
 #| context: server
 
 # This part of the server captures choices for each of the variables into separate reactives
-# These reactives are then used constructing the anchor table
+# These reactives are then used in constructing the anchor table
 
 treat_vars <- reactive({
   input$treat_vars
@@ -137,7 +138,7 @@ numeric_vars <- reactive({
 ```{r}
 #| context: server
 
-# This part of the server creates the input to the anchor table using Tplyr
+# This part of the server creates the base anchor table using Tplyr
 # We currently need at least one count and at least one numeric variable
 
 # Specify anchor table
@@ -268,12 +269,14 @@ output$ae <- renderReactable({
   # display ae table
   t2 %>%
     reactable(.,
+      elementId = "ae",
       width = "auto",
       groupBy = c("row_label1"),
       pagination = FALSE,
       highlight = TRUE,
       sortable = FALSE,
       compact = TRUE,
+      searchable = TRUE,
       defaultColDef = colDef(
         align = "left",
         html = TRUE
@@ -288,6 +291,20 @@ output$ae <- renderReactable({
         )
       )
     )
+})
+
+# Create button to expand all nested terms
+
+output$ae_ctrl <- renderUI({
+   # control
+  validate(need(nrow(sub_data()) > 0, "No data to display"))
+  
+  # create action button for expand/collapse SOCs -> PTs
+  actionButton("expand", "Expand SOCs",
+    style = "border-color: #E10033",
+    class = "btn btn-secondary btn-sm",
+    onclick = "Reactable.toggleAllRowsExpanded('ae')"
+  )
 })
 ```
 
@@ -368,7 +385,8 @@ output$figure <- renderHighchart({
     hc_add_theme(my_theme) %>%
     hc_xAxis(title = list(text = "System Organ Class → Preferred Term")) %>%
     # custom JS for the hovering on the drill down bar chart!
-    # this essentially acts as a legend :)
+    # this essentially acts as a compact legend :)
+    # the JS conditional below specifies a different legend for 1st and 2nd levels of the chart
     hc_tooltip(formatter = JS("function(){
                               if(this.point.AEDECOD === undefined) {
                                 return ('<b>Term:</b> ' +
@@ -402,7 +420,7 @@ output$listing <- renderReactable({
   listing_data <- sub_data() %>%
     left_join(adsl) %>%
     select(USUBJID, ARM, COMP8FL, COMP16FL, COMP24FL) %>%
-    # isn't it awesome we can do things like this in R?!
+    # isn't it awesome we can do things like this?!
     mutate(across(ends_with("FL"),
       .fns = ~ case_when(
         . == "N" ~ "❌ No",
